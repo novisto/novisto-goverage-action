@@ -1,0 +1,47 @@
+name: Coverage Report for Monorepo
+branding:
+  icon: box
+  color: blue
+author: Novisto
+description: |
+  Inspect the coverage for a project in a monorepo with support for comments
+  and failing build based on a minimum threshold and a difference threshold.
+inputs:
+  project_name:
+    description: Name of the project to inspect
+    required: true
+  project_path:
+    description: Path to the project to inspect
+    required: true
+  coverage_file:
+    description: Path to the coverage file, must be in JSON format
+    default: "coverage.json"
+    required: true
+  coverage_threshold:
+    description: Minimum coverage threshold to pass the build
+    default: "80"
+    required: true
+  coverage_diff_threshold:
+    description: |
+      Maximum amount the coverage can decrease compared to the PR's target branch.
+      When 0 or empty it will be ignored
+    required: false
+  publish_coverage:
+    description: Publish coverage to Goverage, set to "true" to enable
+    default: "false"
+    required: true
+  goverage_host:
+    description: Goverage host to publish the coverage
+    required: false
+  goverage_token:
+    description: Goverage token to publish the coverage
+    required: false
+  github_token:
+    description: GitHub Token
+    required: false
+outputs:
+  coverage:
+    description: Total coverage for the project
+runs:
+  using: node20
+  main: "dist/index.js"
