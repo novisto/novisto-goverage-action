@@ -31659,8 +31659,9 @@ const github = __nccwpck_require__(5438);
 const fs = __nccwpck_require__(3292);
 const dedent = __nccwpck_require__(3159);
 
-const REF_TAGS_PREFIX = "refs/tags/"
-const REF_HEADS_PREFIX = "refs/heads/"
+const REFS_TAGS_PREFIX = "refs/tags/"
+const REFS_HEADS_PREFIX = "refs/heads/"
+const REFS_PULL_PREFIX = "refs/pull/"
 
 const SUCCESS_EMOJI = '✅';
 const FAILURE_EMOJI = ':x:';
@@ -31849,14 +31850,16 @@ async function publishCoverage(inputs, coverage) {
 
     const ref = process.env.OVERRIDE_REF || github.context.ref;
     let refName;
-    if (ref.startsWith(REF_TAGS_PREFIX)) {
-        refName = ref.substring(REF_HEADS_PREFIX.length)
-    } else if (ref.startsWith(REF_HEADS_PREFIX)) {
-        refName = ref.substring(REF_HEADS_PREFIX.length)
+    if (ref.startsWith(REFS_TAGS_PREFIX)) {
+        refName = ref.substring(REFS_HEADS_PREFIX.length)
+    } else if (ref.startsWith(REFS_HEADS_PREFIX)) {
+        refName = ref.substring(REFS_HEADS_PREFIX.length)
+    } else if (ref.startsWith(REFS_PULL_PREFIX)) {
+        refName = ref.substring(REFS_PULL_PREFIX.length)
     } else {
         refName = ref;
-
     }
+    refName = encodeURIComponent(refName)
 
     const url = `${inputs.goverageHost}/api/v1/repos/${repo}/projects/${inputs.projectName}/branches/${refName}/commits/${commitHash}/coverage`
 
