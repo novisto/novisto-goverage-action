@@ -6,6 +6,7 @@ import (
 	"goverage/internal/config"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/cohesivestack/valgo"
@@ -89,6 +90,12 @@ func (r *Router) PostCoverage(c echo.Context) error {
 		return err
 	}
 
+	decodedBranchName, err := url.QueryUnescape(reqData.BranchName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unescape branch name")
+	}
+	reqData.BranchName = decodedBranchName
+
 	if err := reqData.Validate(); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
@@ -166,6 +173,12 @@ func (r *Router) GetLatestBranchCoverage(c echo.Context) error {
 		return err
 	}
 
+	decodedBranchName, err := url.QueryUnescape(reqData.BranchName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unescape branch name")
+	}
+	reqData.BranchName = decodedBranchName
+
 	queries := data.New(r.db)
 
 	coverage, err := queries.GetRecentCoverage(ctx, data.GetRecentCoverageParams{
@@ -230,6 +243,12 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 		return err
 	}
 
+	decodedBranchName, err := url.QueryUnescape(reqData.BranchName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unescape branch name")
+	}
+	reqData.BranchName = decodedBranchName
+
 	reqData.SetDefaults()
 	if err := reqData.Validate(); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
@@ -238,7 +257,6 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 	queries := data.New(r.db)
 
 	var coverages []data.Coverage
-	var err error
 
 	offset := int32((*reqData.Page - 1) * int(*reqData.Limit))
 
