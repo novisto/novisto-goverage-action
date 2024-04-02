@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-const readFile = require('fs/promises');
+const fs = require('fs/promises');
 const dedent = require('dedent-js');
 
 const REF_TAGS_PREFIX = "refs/tags/"
@@ -225,7 +225,7 @@ async function run() {
         }
 
         core.info(`Reading coverage file: ${inputs.projectPath}/${inputs.coverageFile}`);
-        const coverage = await readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
+        const coverage = await fs.readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
         const coverageJSON = JSON.parse(coverage);
 
         core.info('Checking coverage threshold');

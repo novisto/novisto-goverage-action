@@ -31656,7 +31656,7 @@ function wrappy (fn, cb) {
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 
-const readFile = __nccwpck_require__(3292);
+const fs = __nccwpck_require__(3292);
 const dedent = __nccwpck_require__(3159);
 
 const REF_TAGS_PREFIX = "refs/tags/"
@@ -31880,7 +31880,7 @@ async function run() {
         }
 
         core.info(`Reading coverage file: ${inputs.projectPath}/${inputs.coverageFile}`);
-        const coverage = await readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
+        const coverage = await fs.readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
         const coverageJSON = JSON.parse(coverage);
 
         core.info('Checking coverage threshold');
