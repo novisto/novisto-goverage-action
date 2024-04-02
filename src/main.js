@@ -200,13 +200,16 @@ async function publishCoverage(inputs, coverage) {
         refName = ref.substring(REF_HEADS_PREFIX.length)
     } else {
         refName = ref;
+
     }
+
+    const url = `${inputs.goverageHost}/api/v1/repos/${repo}/projects/${inputs.projectName}/branches/${refName}/commits/${commitHash}/coverage`
 
     const formData = new FormData();
     formData.append("coverage", new Blob([coverage]), "coverage.json");
 
     const response = await fetch(
-        `${inputs.goverageHost}/api/v1/repos/${repo}/projects/${inputs.projectName}/branches/${refName}/commits/${commitHash}/coverage`, {
+        url, {
             method: 'POST',
             headers: {
                 "X-API-Key": inputs.goverageToken
@@ -217,7 +220,8 @@ async function publishCoverage(inputs, coverage) {
 
     if (response.status !== 201) {
         core.debug(`Failed to publish coverage: ${response.status}`);
-        core.debug(await response.text());
+        core.debug(`URL: ${url}`);
+        core.debug(`Response body: ${await response.text()}`);
         core.warning(`Failed to publish coverage to ${inputs.goverageHost}, status code: ${response.status}`);
     }
 }
