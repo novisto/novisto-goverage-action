@@ -1,5 +1,3 @@
-import {stringify} from "./dist";
-
 const core = require('@actions/core');
 const github = require('@actions/github');
 
@@ -194,15 +192,15 @@ async function run() {
     try {
         core.info('Reading inputs');
         const inputs = {
-            projectName: core.getInput('project_name'),
-            projectPath: core.getInput('project_path'),
-            coverageFile: core.getInput('coverage_file'),
-            coverageThreshold: parseInt(core.getInput('coverage_threshold')),
-            githubToken: core.getInput('github_token') || process.env.GITHUB_TOKEN,
-            coverageDiffThreshold: parseInt(core.getInput('coverage_diff_threshold')),
-            publishCoverage: core.getInput('publish_coverage') === 'true',
-            goverageHost: core.getInput('goverage_host'),
-            goverageToken: core.getInput('goverage_token'),
+            projectName: core.getInput('project_name', {required: true}),
+            projectPath: core.getInput('project_path', {required: true}),
+            coverageFile: core.getInput('coverage_file', {required: true}),
+            coverageThreshold: parseInt(core.getInput('coverage_threshold', {required: true})),
+            coverageDiffThreshold: parseInt(core.getInput('coverage_diff_threshold', {required: false})),
+            publishCoverage: core.getInput('publish_coverage', {required: true}) === 'true',
+            goverageHost: core.getInput('goverage_host', {required: false}),
+            goverageToken: core.getInput('goverage_token', {required: false}),
+            githubToken: core.getInput('github_token', {required: false}) || process.env.GITHUB_TOKEN,
         }
 
         // Validation
@@ -215,10 +213,11 @@ async function run() {
         }
 
         if (!inputs.githubToken) {
-            core.warning('github_token not provided, skipping comment');
+            core.warning('github_token not provided, skipping comments');
         }
 
-        if (inputs.githubToken) {
+        if (inputs.githubToken && github.context.eventName === 'pull_request') {
+            core.info('Checking for skip comment on PR')
             const skipComment = await checkForSkipComment(inputs.githubToken);
             if (skipComment) {
                 core.warning('Skip comment found, skipping coverage check');
@@ -226,8 +225,7 @@ async function run() {
             }
         }
 
-        core.info('Reading coverage file');
-        core.info(`${inputs.projectPath}/${inputs.coverageFile}`);
+        core.info(`Reading coverage file: ${inputs.projectPath}/${inputs.coverageFile}`);
         const coverage = await readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
         const coverageJSON = JSON.parse(coverage);
 
@@ -292,4 +290,4 @@ async function run() {
     }
 }
 
-run();
+module.exports = { run }
