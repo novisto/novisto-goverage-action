@@ -31724,7 +31724,7 @@ function formatComment(inputs, currentCoverage, files, diffCheck) {
 
     return dedent(`${getPrefixString(inputs.projectName)}
     ---
-    ${emoji} Coverage of **${round(currentCoverage)}%** is ${adjective} threshold of **${inputs.coverageThreshold}%**.
+    ${emoji} Coverage of **${round(currentCoverage)}%** is ${adjective} the threshold of **${inputs.coverageThreshold}%**.
     ${diffThresholdMessageString}
     
     <details>
@@ -31842,6 +31842,41 @@ async function compareCoverageWithBaseRef(inputs, currentCoverage) {
     }
 }
 
+async function publishCoverage(inputs, coverage) {
+    core.info('Publishing coverage');
+    const repo = process.env.OVERRIDE_REPO_NAME || github.context.repo.repo;
+    const commitHash = process.env.OVERRIDE_COMMIT_HASH || github.context.sha;
+
+    const ref = process.env.OVERRIDE_REF || github.context.ref;
+    let refName;
+    if (ref.startsWith(REF_TAGS_PREFIX)) {
+        refName = ref.substring(REF_HEADS_PREFIX.length)
+    } else if (ref.startsWith(REF_HEADS_PREFIX)) {
+        refName = ref.substring(REF_HEADS_PREFIX.length)
+    } else {
+        refName = ref;
+    }
+
+    const formData = new FormData();
+    formData.append("coverage", new Blob([coverage]), "coverage.json");
+
+    const response = await fetch(
+        `${inputs.goverageHost}/api/v1/repos/${repo}/projects/${inputs.projectName}/branches/${refName}/commits/${commitHash}/coverage`, {
+            method: 'POST',
+            headers: {
+                "X-API-Key": inputs.goverageToken
+            },
+            body: formData,
+        }
+    )
+
+    if (response.status !== 201) {
+        core.debug(`Failed to publish coverage: ${response.status}`);
+        core.debug(await response.text());
+        core.warning(`Failed to publish coverage to ${inputs.goverageHost}, status code: ${response.status}`);
+    }
+}
+
 function validateInputs(inputs) {
     if (inputs.coverageThreshold < 0 || inputs.coverageThreshold > 100) {
         throw new Error('coverage_threshold must be between 0 and 100');
@@ -31938,36 +31973,7 @@ async function run() {
         }
 
         if (inputs.publishCoverage && inputs.goverageHost !== "" && inputs.goverageToken !== "") {
-            core.info('Publishing coverage');
-            const repo = process.env.OVERRIDE_REPO_NAME || github.context.repo.repo;
-            const commitHash = process.env.OVERRIDE_COMMIT_HASH || github.context.sha;
-
-            const ref = process.env.OVERRIDE_REF || github.context.ref;
-            let refName;
-            if (ref.startsWith(REF_TAGS_PREFIX)) {
-                refName = ref.substring(REF_HEADS_PREFIX.length)
-            } else if (ref.startsWith(REF_HEADS_PREFIX)) {
-                refName = ref.substring(REF_HEADS_PREFIX.length)
-            } else {
-                refName = ref;
-            }
-
-            const formData = new FormData();
-            formData.append("coverage", new Blob([coverage]), "coverage.json");
-
-            const response = await fetch(
-                `${inputs.goverageHost}/api/v1/repos/${repo}/projects/${inputs.projectName}/branches/${refName}/commits/${commitHash}/coverage`, {
-                    method: 'POST',
-                    headers: {
-                        "X-API-Key": inputs.goverageToken
-                    },
-                    body: formData,
-                }
-            )
-
-            if (response.status !== 201) {
-                core.warning(`Failed to publish coverage to ${inputs.goverageHost}`);
-            }
+            await publishCoverage(inputs, coverage);
         }
     } catch (error) {
         core.setFailed(error.message);
