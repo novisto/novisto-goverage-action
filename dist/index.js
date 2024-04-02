@@ -31842,6 +31842,46 @@ async function compareCoverageWithBaseRef(inputs, currentCoverage) {
     }
 }
 
+function validateInputs(inputs) {
+    if (inputs.coverageThreshold < 0 || inputs.coverageThreshold > 100) {
+        throw new Error('coverage_threshold must be between 0 and 100');
+    }
+
+    if (inputs.coverageDiffThreshold < 0 || inputs.coverageDiffThreshold > 100) {
+        throw new Error('coverage_diff_threshold must be between 0 and 100');
+    }
+
+    if (inputs.goverageToken && !inputs.goverageHost) {
+        throw new Error('goverage_host must be provided to publish coverage, only got goverage_token');
+    }
+
+    if (!inputs.goverageToken && inputs.goverageHost) {
+        throw new Error('goverage_token must be provided to publish coverage, only got goverage_host');
+    }
+
+    if (inputs.publishCoverage && (!inputs.goverageHost || !inputs.goverageToken)) {
+        core.warning(
+            'publish_coverage is true, but goverage_host and goverage_token must be provided to publish coverage'
+        );
+    }
+
+    if (!inputs.githubToken) {
+        core.warning('github_token not provided, skipping comments');
+    }
+}
+
+function debugInputs(inputs) {
+    core.debug(`projectName: ${inputs.projectName}`);
+    core.debug(`projectPath: ${inputs.projectPath}`);
+    core.debug(`coverageFile: ${inputs.coverageFile}`);
+    core.debug(`coverageThreshold: ${inputs.coverageThreshold}`);
+    core.debug(`coverageDiffThreshold: ${inputs.coverageDiffThreshold}`);
+    core.debug(`publishCoverage: ${inputs.publishCoverage}`);
+    core.debug(`goverageHost: ${inputs.goverageHost}`);
+    core.debug(`goverageToken: ${inputs.goverageToken.substring(0,3)}*****`);
+    core.debug(`githubToken: ${inputs.githubToken.substring(0,3)}*****`);
+}
+
 async function run() {
     try {
         core.info('Reading inputs');
@@ -31857,18 +31897,8 @@ async function run() {
             githubToken: core.getInput('github_token', {required: false}) || process.env.GITHUB_TOKEN,
         }
 
-        // Validation
-        if (inputs.coverageThreshold < 0 || inputs.coverageThreshold > 100) {
-            throw new Error('coverage_threshold must be between 0 and 100');
-        }
-
-        if (inputs.coverageDiffThreshold < 0 || inputs.coverageDiffThreshold > 100) {
-            throw new Error('coverage_diff_threshold must be between 0 and 100');
-        }
-
-        if (!inputs.githubToken) {
-            core.warning('github_token not provided, skipping comments');
-        }
+        debugInputs(inputs);
+        validateInputs(inputs);
 
         if (inputs.githubToken && github.context.eventName === 'pull_request') {
             core.info('Checking for skip comment on PR')
