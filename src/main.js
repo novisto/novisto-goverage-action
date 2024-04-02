@@ -1,8 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-import {readFile} from 'fs/promises';
-
+const readFile = require('fs/promises');
 const dedent = require('dedent-js');
 
 const REF_TAGS_PREFIX = "refs/tags/"

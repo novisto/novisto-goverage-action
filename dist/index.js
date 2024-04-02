@@ -31650,22 +31650,13 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 869:
-/***/ ((module, __webpack_exports__, __nccwpck_require__) => {
+/***/ 1713:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-// ESM COMPAT FLAG
-__nccwpck_require__.r(__webpack_exports__);
-
-;// CONCATENATED MODULE: external "fs/promises"
-const promises_namespaceObject = require("fs/promises");
-;// CONCATENATED MODULE: ./src/main.js
-/* module decorator */ module = __nccwpck_require__.hmd(module);
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 
-
-
+const readFile = __nccwpck_require__(3292);
 const dedent = __nccwpck_require__(3159);
 
 const REF_TAGS_PREFIX = "refs/tags/"
@@ -31889,7 +31880,7 @@ async function run() {
         }
 
         core.info(`Reading coverage file: ${inputs.projectPath}/${inputs.coverageFile}`);
-        const coverage = await (0,promises_namespaceObject.readFile)(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
+        const coverage = await readFile(`${inputs.projectPath}/${inputs.coverageFile}`, 'utf8');
         const coverageJSON = JSON.parse(coverage);
 
         core.info('Checking coverage threshold');
@@ -32027,6 +32018,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
@@ -33845,8 +33844,8 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			id: moduleId,
-/******/ 			loaded: false,
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
 /******/ 	
@@ -33859,40 +33858,11 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
 /******/ 	
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/harmony module decorator */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.hmd = (module) => {
-/******/ 			module = Object.create(module);
-/******/ 			if (!module.children) module.children = [];
-/******/ 			Object.defineProperty(module, 'exports', {
-/******/ 				enumerable: true,
-/******/ 				set: () => {
-/******/ 					throw new Error('ES Modules may not assign module.exports or exports.*, Use ESM export syntax, instead: ' + module.id);
-/******/ 				}
-/******/ 			});
-/******/ 			return module;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nccwpck_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
@@ -33901,7 +33871,7 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const { run } = __nccwpck_require__(869)
+const { run } = __nccwpck_require__(1713)
 
 run();
 
