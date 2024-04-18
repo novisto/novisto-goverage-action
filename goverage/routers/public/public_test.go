@@ -27,7 +27,7 @@ func TestGetBranchBadge(t *testing.T) {
 			BranchName:  "branch1",
 			Coverage:    90.0,
 		}, nil)
-		req := httptest.NewRequest(http.MethodGet, "/repos/repo1/projects/project1/branches/branch1/badge", nil)
+		req := httptest.NewRequest(http.MethodGet, "/repos/repo1/projects/project1/branches/branch1/badge", http.NoBody)
 		rec := httptest.NewRecorder()
 		c := router.e.NewContext(req, rec)
 
