@@ -42,6 +42,35 @@ func (q *Queries) GetRecentCoverage(ctx context.Context, arg GetRecentCoveragePa
 	return i, err
 }
 
+const listBranches = `-- name: ListBranches :many
+SELECT DISTINCT branch_name FROM coverage WHERE repo_name = $1 AND project_name = $2 order by branch_name
+`
+
+type ListBranchesParams struct {
+	RepoName    string
+	ProjectName string
+}
+
+func (q *Queries) ListBranches(ctx context.Context, arg ListBranchesParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, listBranches, arg.RepoName, arg.ProjectName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var branch_name string
+		if err := rows.Scan(&branch_name); err != nil {
+			return nil, err
+		}
+		items = append(items, branch_name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCoverageAsc = `-- name: ListCoverageAsc :many
 SELECT id, repo_name, project_name, branch_name, commit, coverage, coverage_date, raw_data FROM coverage
 WHERE repo_name = $1
@@ -141,6 +170,54 @@ func (q *Queries) ListCoverageDesc(ctx context.Context, arg ListCoverageDescPara
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProjects = `-- name: ListProjects :many
+SELECT DISTINCT project_name FROM coverage WHERE repo_name = $1 order by project_name
+`
+
+func (q *Queries) ListProjects(ctx context.Context, repoName string) ([]string, error) {
+	rows, err := q.db.Query(ctx, listProjects, repoName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var project_name string
+		if err := rows.Scan(&project_name); err != nil {
+			return nil, err
+		}
+		items = append(items, project_name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRepositories = `-- name: ListRepositories :many
+SELECT DISTINCT repo_name FROM coverage order by repo_name
+`
+
+func (q *Queries) ListRepositories(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listRepositories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var repo_name string
+		if err := rows.Scan(&repo_name); err != nil {
+			return nil, err
+		}
+		items = append(items, repo_name)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

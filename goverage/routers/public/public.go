@@ -3,23 +3,27 @@ package public
 import (
 	"context"
 	"fmt"
-	"goverage/data"
 	"math"
 	"net/http"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
+	"goverage/data"
+
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
 type Router struct {
-	e  *echo.Echo
-	db *pgx.Conn
+	e    *echo.Echo
+	repo repository
 }
 
-func NewPublicRouter(e *echo.Echo, db *pgx.Conn) *Router {
-	return &Router{e: e, db: db}
+type repository interface {
+	GetRecentCoverage(ctx context.Context, params data.GetRecentCoverageParams) (data.Coverage, error)
+}
+
+func NewPublicRouter(e *echo.Echo, repo repository) *Router {
+	return &Router{e: e, repo: repo}
 }
 
 type GetBranchBadgeRequest struct {
@@ -36,9 +40,7 @@ func (r *Router) GetBranchBadge(c echo.Context) error {
 		return err
 	}
 
-	queries := data.New(r.db)
-
-	dbCoverage, err := queries.GetRecentCoverage(ctx, data.GetRecentCoverageParams{
+	dbCoverage, err := r.repo.GetRecentCoverage(ctx, data.GetRecentCoverageParams{
 		RepoName:    reqData.RepoName,
 		ProjectName: reqData.ProjectName,
 		BranchName:  reqData.BranchName,

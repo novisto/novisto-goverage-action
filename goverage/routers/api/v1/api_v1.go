@@ -1,16 +1,18 @@
 package apiv1
 
 import (
+	"context"
 	"encoding/json"
-	"goverage/data"
-	"goverage/internal/config"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
 
+	"goverage/data"
+	"goverage/internal/config"
+	"goverage/internal/httperrors"
+
 	"github.com/cohesivestack/valgo"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,9 +20,19 @@ import (
 	"github.com/samber/lo"
 )
 
+type repository interface {
+	ListBranches(ctx context.Context, params data.ListBranchesParams) ([]string, error)
+	GetRecentCoverage(ctx context.Context, params data.GetRecentCoverageParams) (data.Coverage, error)
+	ListCoverageAsc(ctx context.Context, params data.ListCoverageAscParams) ([]data.Coverage, error)
+	ListCoverageDesc(ctx context.Context, params data.ListCoverageDescParams) ([]data.Coverage, error)
+	UpsertCoverage(ctx context.Context, params data.UpsertCoverageParams) (data.Coverage, error)
+	ListRepositories(ctx context.Context) ([]string, error)
+	ListProjects(ctx context.Context, repoName string) ([]string, error)
+}
+
 type Router struct {
-	e  *echo.Echo
-	db *pgx.Conn
+	e    *echo.Echo
+	repo repository
 }
 
 type PythonCoverageJSONFile struct {
@@ -57,8 +69,8 @@ func coverageModelToSchema(coverage data.Coverage) CoverageSchema {
 	}
 }
 
-func NewAPIV1Router(e *echo.Echo, db *pgx.Conn) *Router {
-	return &Router{e: e, db: db}
+func NewAPIV1Router(e *echo.Echo, repo repository) *Router {
+	return &Router{e: e, repo: repo}
 }
 
 type PostCoverageRequest struct {
@@ -137,9 +149,7 @@ func (r *Router) PostCoverage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to read coverage file")
 	}
 
-	queries := data.New(r.db)
-
-	_, err = queries.UpsertCoverage(ctx, data.UpsertCoverageParams{
+	_, err = r.repo.UpsertCoverage(ctx, data.UpsertCoverageParams{
 		RepoName:    reqData.RepoName,
 		ProjectName: reqData.ProjectName,
 		BranchName:  reqData.BranchName,
@@ -179,9 +189,7 @@ func (r *Router) GetLatestBranchCoverage(c echo.Context) error {
 	}
 	reqData.BranchName = decodedBranchName
 
-	queries := data.New(r.db)
-
-	coverage, err := queries.GetRecentCoverage(ctx, data.GetRecentCoverageParams{
+	coverage, err := r.repo.GetRecentCoverage(ctx, data.GetRecentCoverageParams{
 		RepoName:    reqData.RepoName,
 		ProjectName: reqData.ProjectName,
 		BranchName:  reqData.BranchName,
@@ -254,14 +262,12 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	queries := data.New(r.db)
-
 	var coverages []data.Coverage
 
 	offset := int32((*reqData.Page - 1) * int(*reqData.Limit))
 
 	if *reqData.Order == "asc" {
-		coverages, err = queries.ListCoverageAsc(ctx, data.ListCoverageAscParams{
+		coverages, err = r.repo.ListCoverageAsc(ctx, data.ListCoverageAscParams{
 			RepoName:    reqData.RepoName,
 			ProjectName: reqData.ProjectName,
 			BranchName:  reqData.BranchName,
@@ -269,7 +275,7 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 			Offset:      offset,
 		})
 	} else {
-		coverages, err = queries.ListCoverageDesc(ctx, data.ListCoverageDescParams{
+		coverages, err = r.repo.ListCoverageDesc(ctx, data.ListCoverageDescParams{
 			RepoName:    reqData.RepoName,
 			ProjectName: reqData.ProjectName,
 			BranchName:  reqData.BranchName,
@@ -279,7 +285,7 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 	}
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get coverage history")
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get coverage history")
+		return httperrors.WriteResponse(c, http.StatusInternalServerError, "failed to get coverage history")
 	}
 
 	coveragesSchemas := make([]CoverageSchema, 0, len(coverages))
@@ -288,6 +294,72 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, coveragesSchemas)
+}
+
+func (r *Router) ListRepositories(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	repos, err := r.repo.ListRepositories(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get repos")
+		return httperrors.WriteResponse(c, http.StatusInternalServerError, "failed to get repos")
+	}
+	if repos == nil {
+		repos = []string{}
+	}
+
+	return c.JSON(http.StatusOK, repos)
+}
+
+type ListProjectsRequest struct {
+	RepoName string `param:"repoName"`
+}
+
+func (r *Router) ListProjects(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	var reqData ListProjectsRequest
+	if err := c.Bind(&reqData); err != nil {
+		return err
+	}
+
+	projects, err := r.repo.ListProjects(ctx, reqData.RepoName)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get projects")
+		return httperrors.WriteResponse(c, http.StatusInternalServerError, "failed to get projects")
+	}
+	if projects == nil {
+		projects = []string{}
+	}
+
+	return c.JSON(http.StatusOK, projects)
+}
+
+type ListBranchesRequest struct {
+	RepoName    string `param:"repoName"`
+	ProjectName string `param:"projectName"`
+}
+
+func (r *Router) ListBranches(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	var reqData ListBranchesRequest
+	if err := c.Bind(&reqData); err != nil {
+		return err
+	}
+
+	branches, err := r.repo.ListBranches(ctx, data.ListBranchesParams{
+		RepoName: reqData.RepoName, ProjectName: reqData.ProjectName,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get branches")
+		return httperrors.WriteResponse(c, http.StatusInternalServerError, "failed to get branches")
+	}
+	if branches == nil {
+		branches = []string{}
+	}
+
+	return c.JSON(http.StatusOK, branches)
 }
 
 func (r *Router) Register() {
@@ -300,6 +372,15 @@ func (r *Router) Register() {
 		},
 	}))
 
+	apiGroup.GET(
+		"/repos", r.ListRepositories,
+	)
+	apiGroup.GET(
+		"/repos/:repoName/projects", r.ListProjects,
+	)
+	apiGroup.GET(
+		"/repos/:repoName/projects/:projectName/branches", r.ListBranches,
+	)
 	apiGroup.POST(
 		"/repos/:repoName/projects/:projectName/branches/:branchName/commits/:commit/coverage", r.PostCoverage,
 	)
