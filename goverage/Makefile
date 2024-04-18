@@ -17,11 +17,15 @@ lint:
 	golangci-lint run
 
 tests:
-	go test -v .
+	go test -v ./...
 
 sqlc:
 	rm -rf data/*
 	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc generate
+
+sqlc-check:
+	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc vet
+	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc diff
 
 build: sqlc
 	go build .

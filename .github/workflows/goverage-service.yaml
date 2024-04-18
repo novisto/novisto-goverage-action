@@ -1,0 +1,38 @@
+name: Goverage Service
+
+on:
+  pull_request:
+    paths:
+      - goverage/**
+      - .github/workflows/goverage-service.yaml
+  workflow_dispatch:
+
+jobs:
+    goverage:
+        name: Goverage Service
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+        - name: Setup Go
+          uses: actions/setup-go@v5
+          with:
+            go-version-file: "goverage/go.mod"
+        - name: Install deps
+          run: go mod download
+          working-directory: goverage
+        - name: Go Vet
+          run: go vet
+          working-directory: goverage
+        - name: Run golangci-lint
+          uses: golangci/golangci-lint-action@v4
+          with:
+              version: v1.56.2
+              working-directory: goverage
+              skip-pkg-cache: true
+        - name: Check sqlc
+          run: make sqlc-check
+          working-directory: goverage
+        - name: Run tests
+          run: make tests
+          working-directory: goverage
