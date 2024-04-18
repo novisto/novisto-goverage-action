@@ -21,7 +21,7 @@ tests:
 
 sqlc:
 	rm -rf data/*
-	sqlc generate
+	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc generate
 
 build: sqlc
 	go build .
@@ -36,13 +36,13 @@ docker-kill:
 	docker kill goverage-api
 
 goose-up:
-	goose -dir sql/versions postgres $(LOCAL_DB_CONN_STR) up
+	go run -mod=mod github.com/pressly/goose/v3/cmd/goose -dir sql/versions postgres $(LOCAL_DB_CONN_STR) up
 
 goose-down:
-	goose -dir sql/versions postgres $(LOCAL_DB_CONN_STR) down
+	go run -mod=mod github.com/pressly/goose/v3/cmd/goose -dir sql/versions postgres $(LOCAL_DB_CONN_STR) down
 
 goose-create:
-	goose -dir sql/versions create $(name) sql
+	go run -mod=mod github.com/pressly/goose/v3/cmd/goose -dir sql/versions create $(name) sql
 
 pg-start:
 	docker run -p 54350:5432 --name goverage-pg --rm -d \
