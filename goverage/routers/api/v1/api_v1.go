@@ -343,8 +343,6 @@ type ListBranchesRequest struct {
 func (r *Router) ListBranches(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	param := c.Param("repoName")
-	print(param)
 	var reqData ListBranchesRequest
 	if err := c.Bind(&reqData); err != nil {
 		return err
