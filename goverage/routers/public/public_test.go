@@ -28,6 +28,7 @@ func TestGetBranchBadge(t *testing.T) {
 			Coverage:    90.0,
 		}, nil)
 		req := httptest.NewRequest(http.MethodGet, "/repos/repo1/projects/project1/branches/branch1/badge", http.NoBody)
+		req.ContentLength = 0 // Required for echo to parse the request body correctly
 		rec := httptest.NewRecorder()
 		c := router.e.NewContext(req, rec)
 

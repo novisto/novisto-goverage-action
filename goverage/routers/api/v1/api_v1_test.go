@@ -23,6 +23,7 @@ func TestListRepository(t *testing.T) {
 		router := NewAPIV1Router(echo.New(), mockDB)
 		mockDB.On("ListRepositories", mock.Anything).Return(returnValue, returnError)
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/repos", http.NoBody)
+		req.ContentLength = 0 // Required for echo to parse the request body correctly
 		rec := httptest.NewRecorder()
 		c := router.e.NewContext(req, rec)
 
@@ -67,6 +68,7 @@ func TestListProjects(t *testing.T) {
 		router := NewAPIV1Router(echo.New(), mockDB)
 		mockDB.On("ListProjects", mock.Anything, expectedProjectsParam).Return(returnValue, returnError)
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/repos/repo1/projects", http.NoBody)
+		req.ContentLength = 0 // Required for echo to parse the request body correctly
 		rec := httptest.NewRecorder()
 		c := router.e.NewContext(req, rec)
 		c.SetParamNames("repoName")
@@ -116,6 +118,7 @@ func TestListBranches(t *testing.T) {
 		router := NewAPIV1Router(echo.New(), mockDB)
 		mockDB.On("ListBranches", mock.Anything, expectedBranchesParams).Return(returnValue, returnError)
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/repos/repo1/projects/project1/branches", http.NoBody)
+		req.ContentLength = 0 // Required for echo to parse the request body correctly
 		rec := httptest.NewRecorder()
 		c := router.e.NewContext(req, rec)
 		c.SetParamNames("repoName", "projectName")
