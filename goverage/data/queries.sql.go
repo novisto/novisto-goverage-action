@@ -11,6 +11,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getCoverageData = `-- name: GetCoverageData :one
+SELECT raw_data FROM coverage
+WHERE repo_name = $1
+    AND project_name = $2
+    AND branch_name = $3
+    AND "commit" = $4
+LIMIT 1
+`
+
+type GetCoverageDataParams struct {
+	RepoName    string
+	ProjectName string
+	BranchName  string
+	Commit      string
+}
+
+func (q *Queries) GetCoverageData(ctx context.Context, arg GetCoverageDataParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getCoverageData,
+		arg.RepoName,
+		arg.ProjectName,
+		arg.BranchName,
+		arg.Commit,
+	)
+	var raw_data []byte
+	err := row.Scan(&raw_data)
+	return raw_data, err
+}
+
 const getRecentCoverage = `-- name: GetRecentCoverage :one
 SELECT id, repo_name, project_name, branch_name, commit, coverage, coverage_date, raw_data FROM coverage
 WHERE repo_name = $1

@@ -23,6 +23,7 @@ import (
 type repository interface {
 	ListBranches(ctx context.Context, params data.ListBranchesParams) ([]string, error)
 	GetRecentCoverage(ctx context.Context, params data.GetRecentCoverageParams) (data.Coverage, error)
+	GetCoverageData(ctx context.Context, params data.GetCoverageDataParams) ([]byte, error)
 	ListCoverageAsc(ctx context.Context, params data.ListCoverageAscParams) ([]data.Coverage, error)
 	ListCoverageDesc(ctx context.Context, params data.ListCoverageDescParams) ([]data.Coverage, error)
 	UpsertCoverage(ctx context.Context, params data.UpsertCoverageParams) (data.Coverage, error)
@@ -199,6 +200,45 @@ func (r *Router) GetLatestBranchCoverage(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, coverageModelToSchema(coverage))
+}
+
+type GetCoverageDataRequest struct {
+	RepoName    string `param:"repoName"`
+	ProjectName string `param:"projectName"`
+	BranchName  string `param:"branchName"`
+	Commit      string `param:"commit"`
+}
+
+func (r *Router) GetCoverageData(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	var reqData GetCoverageDataRequest
+	if err := c.Bind(&reqData); err != nil {
+		return err
+	}
+
+	decodedBranchName, err := url.QueryUnescape(reqData.BranchName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unescape branch name")
+	}
+	reqData.BranchName = decodedBranchName
+
+	coverage, err := r.repo.GetCoverageData(ctx, data.GetCoverageDataParams{
+		RepoName:    reqData.RepoName,
+		ProjectName: reqData.ProjectName,
+		BranchName:  reqData.BranchName,
+		Commit:      reqData.Commit,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "failed to get coverage data")
+	}
+
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(coverage, &jsonData); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to unmarshal coverage data")
+	}
+
+	return c.JSON(http.StatusOK, jsonData)
 }
 
 type ListCoverageHistoryRequest struct {
@@ -386,6 +426,9 @@ func (r *Router) Register() {
 	)
 	apiGroup.GET(
 		"/repos/:repoName/projects/:projectName/branches/:branchName/coverage", r.GetLatestBranchCoverage,
+	)
+	apiGroup.GET(
+		"/repos/:repoName/projects/:projectName/branches/:branchName/commits/:commit/coverage_data", r.GetCoverageData,
 	)
 	apiGroup.GET(
 		"/repos/:repoName/projects/:projectName/branches/:branchName/coverage_history", r.ListCoverageHistory,

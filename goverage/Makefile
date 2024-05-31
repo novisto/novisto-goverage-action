@@ -10,7 +10,7 @@ install:
 	go mod download
 
 run:
-	GOVERAGE_DB_CONN_STR=$(LOCAL_DB_CONN_STR) GOVERAGE_API_KEY=valid-key go run ./server.go
+	GOVERAGE_DB_CONN_STR='$(LOCAL_DB_CONN_STR)' GOVERAGE_API_KEY=valid-key go run ./server.go
 
 lint:
 	go vet
@@ -26,6 +26,9 @@ sqlc:
 sqlc-check:
 	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc vet
 	go run -mod=mod github.com/sqlc-dev/sqlc/cmd/sqlc diff
+
+generate:
+	go generate ./...
 
 build: sqlc
 	go build .
