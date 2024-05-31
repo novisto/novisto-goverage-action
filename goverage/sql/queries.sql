@@ -6,6 +6,14 @@ WHERE repo_name = $1
 ORDER BY coverage_date DESC
 LIMIT 1;
 
+-- name: GetCoverageData :one
+SELECT raw_data FROM coverage
+WHERE repo_name = $1
+    AND project_name = $2
+    AND branch_name = $3
+    AND "commit" = $4
+LIMIT 1;
+
 -- name: ListCoverageDesc :many
 SELECT * FROM coverage
 WHERE repo_name = $1
