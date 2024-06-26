@@ -52,14 +52,17 @@ function formatComment(inputs, currentCoverage, files, diffCheck) {
 
     let diffThresholdMessageString = ''
     if (diffCheck.checked) {
+        const roundedChange = round(diffCheck.change, 3);
         if (diffCheck.success) {
-            if (diffCheck.change < 0) {
-                diffThresholdMessageString = `${WARNING_EMOJI} Coverage decreased by **${Math.abs(round(diffCheck.change, 2))}%** compared to base branch **${diffCheck.baseRef}**.`;
+            if (roundedChange < 0) {
+                diffThresholdMessageString = `${WARNING_EMOJI} Coverage decreased by **${Math.abs(roundedChange)}%** compared to base branch **${diffCheck.baseRef}**.`;
+            } else if (roundedChange > 0) {
+                diffThresholdMessageString = `${SUCCESS_EMOJI} Coverage increased by **${roundedChange}%** compared to base branch **${diffCheck.baseRef}**.`;
             } else {
-                diffThresholdMessageString = `${SUCCESS_EMOJI} Coverage increased by **${round(diffCheck.change, 2)}%** compared to base branch **${diffCheck.baseRef}**.`;
+                diffThresholdMessageString = `${SUCCESS_EMOJI} Coverage did not change compared to base branch **${diffCheck.baseRef}**.`;
             }
         } else {
-            diffThresholdMessageString = `${FAILURE_EMOJI} Coverage decreased by **${round(diffCheck.change, 2)}%** compared to base branch **${diffCheck.baseRef}**, more than the specified threshold of **${inputs.coverageDiffThreshold}%**.`;
+            diffThresholdMessageString = `${FAILURE_EMOJI} Coverage decreased by **${roundedChange}%** compared to base branch **${diffCheck.baseRef}**, more than the specified threshold of **${inputs.coverageDiffThreshold}%**.`;
         }
     }
 
