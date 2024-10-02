@@ -197,28 +197,28 @@ func (_c *Repository_ListBranches_Call) RunAndReturn(run func(context.Context, d
 	return _c
 }
 
-// ListCoverageAsc provides a mock function with given fields: ctx, params
-func (_m *Repository) ListCoverageAsc(ctx context.Context, params data.ListCoverageAscParams) ([]data.Coverage, error) {
+// ListCoverageSummary provides a mock function with given fields: ctx, params
+func (_m *Repository) ListCoverageSummary(ctx context.Context, params data.ListCoverageSummaryParams) ([]data.ListCoverageSummaryRow, error) {
 	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListCoverageAsc")
+		panic("no return value specified for ListCoverageSummary")
 	}
 
-	var r0 []data.Coverage
+	var r0 []data.ListCoverageSummaryRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageAscParams) ([]data.Coverage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageSummaryParams) ([]data.ListCoverageSummaryRow, error)); ok {
 		return rf(ctx, params)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageAscParams) []data.Coverage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageSummaryParams) []data.ListCoverageSummaryRow); ok {
 		r0 = rf(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]data.Coverage)
+			r0 = ret.Get(0).([]data.ListCoverageSummaryRow)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, data.ListCoverageAscParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, data.ListCoverageSummaryParams) error); ok {
 		r1 = rf(ctx, params)
 	} else {
 		r1 = ret.Error(1)
@@ -227,90 +227,31 @@ func (_m *Repository) ListCoverageAsc(ctx context.Context, params data.ListCover
 	return r0, r1
 }
 
-// Repository_ListCoverageAsc_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCoverageAsc'
-type Repository_ListCoverageAsc_Call struct {
+// Repository_ListCoverageSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCoverageSummary'
+type Repository_ListCoverageSummary_Call struct {
 	*mock.Call
 }
 
-// ListCoverageAsc is a helper method to define mock.On call
+// ListCoverageSummary is a helper method to define mock.On call
 //   - ctx context.Context
-//   - params data.ListCoverageAscParams
-func (_e *Repository_Expecter) ListCoverageAsc(ctx interface{}, params interface{}) *Repository_ListCoverageAsc_Call {
-	return &Repository_ListCoverageAsc_Call{Call: _e.mock.On("ListCoverageAsc", ctx, params)}
+//   - params data.ListCoverageSummaryParams
+func (_e *Repository_Expecter) ListCoverageSummary(ctx interface{}, params interface{}) *Repository_ListCoverageSummary_Call {
+	return &Repository_ListCoverageSummary_Call{Call: _e.mock.On("ListCoverageSummary", ctx, params)}
 }
 
-func (_c *Repository_ListCoverageAsc_Call) Run(run func(ctx context.Context, params data.ListCoverageAscParams)) *Repository_ListCoverageAsc_Call {
+func (_c *Repository_ListCoverageSummary_Call) Run(run func(ctx context.Context, params data.ListCoverageSummaryParams)) *Repository_ListCoverageSummary_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(data.ListCoverageAscParams))
+		run(args[0].(context.Context), args[1].(data.ListCoverageSummaryParams))
 	})
 	return _c
 }
 
-func (_c *Repository_ListCoverageAsc_Call) Return(_a0 []data.Coverage, _a1 error) *Repository_ListCoverageAsc_Call {
+func (_c *Repository_ListCoverageSummary_Call) Return(_a0 []data.ListCoverageSummaryRow, _a1 error) *Repository_ListCoverageSummary_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Repository_ListCoverageAsc_Call) RunAndReturn(run func(context.Context, data.ListCoverageAscParams) ([]data.Coverage, error)) *Repository_ListCoverageAsc_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListCoverageDesc provides a mock function with given fields: ctx, params
-func (_m *Repository) ListCoverageDesc(ctx context.Context, params data.ListCoverageDescParams) ([]data.Coverage, error) {
-	ret := _m.Called(ctx, params)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListCoverageDesc")
-	}
-
-	var r0 []data.Coverage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageDescParams) ([]data.Coverage, error)); ok {
-		return rf(ctx, params)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, data.ListCoverageDescParams) []data.Coverage); ok {
-		r0 = rf(ctx, params)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]data.Coverage)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, data.ListCoverageDescParams) error); ok {
-		r1 = rf(ctx, params)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Repository_ListCoverageDesc_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCoverageDesc'
-type Repository_ListCoverageDesc_Call struct {
-	*mock.Call
-}
-
-// ListCoverageDesc is a helper method to define mock.On call
-//   - ctx context.Context
-//   - params data.ListCoverageDescParams
-func (_e *Repository_Expecter) ListCoverageDesc(ctx interface{}, params interface{}) *Repository_ListCoverageDesc_Call {
-	return &Repository_ListCoverageDesc_Call{Call: _e.mock.On("ListCoverageDesc", ctx, params)}
-}
-
-func (_c *Repository_ListCoverageDesc_Call) Run(run func(ctx context.Context, params data.ListCoverageDescParams)) *Repository_ListCoverageDesc_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(data.ListCoverageDescParams))
-	})
-	return _c
-}
-
-func (_c *Repository_ListCoverageDesc_Call) Return(_a0 []data.Coverage, _a1 error) *Repository_ListCoverageDesc_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *Repository_ListCoverageDesc_Call) RunAndReturn(run func(context.Context, data.ListCoverageDescParams) ([]data.Coverage, error)) *Repository_ListCoverageDesc_Call {
+func (_c *Repository_ListCoverageSummary_Call) RunAndReturn(run func(context.Context, data.ListCoverageSummaryParams) ([]data.ListCoverageSummaryRow, error)) *Repository_ListCoverageSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -99,31 +99,36 @@ func (q *Queries) ListBranches(ctx context.Context, arg ListBranchesParams) ([]s
 	return items, nil
 }
 
-const listCoverageAsc = `-- name: ListCoverageAsc :many
+const listCoverage = `-- name: ListCoverage :many
 SELECT id, repo_name, project_name, branch_name, commit, coverage, coverage_date, raw_data FROM coverage
 WHERE repo_name = $1
   AND project_name = $2
   AND branch_name = $3
-ORDER BY coverage_date ASC
+ORDER BY
+case WHEN lower($6) = 'asc' THEN coverage_date END ASC,
+case WHEN lower($6) = 'desc' THEN coverage_date END DESC,
+coverage_date ASC
 OFFSET $4
 LIMIT $5
 `
 
-type ListCoverageAscParams struct {
-	RepoName    string
-	ProjectName string
-	BranchName  string
-	Offset      int32
-	Limit       int32
+type ListCoverageParams struct {
+	RepoName       string
+	ProjectName    string
+	BranchName     string
+	Offset         int32
+	Limit          int32
+	OrderDirection string
 }
 
-func (q *Queries) ListCoverageAsc(ctx context.Context, arg ListCoverageAscParams) ([]Coverage, error) {
-	rows, err := q.db.Query(ctx, listCoverageAsc,
+func (q *Queries) ListCoverage(ctx context.Context, arg ListCoverageParams) ([]Coverage, error) {
+	rows, err := q.db.Query(ctx, listCoverage,
 		arg.RepoName,
 		arg.ProjectName,
 		arg.BranchName,
 		arg.Offset,
 		arg.Limit,
+		arg.OrderDirection,
 	)
 	if err != nil {
 		return nil, err
@@ -152,48 +157,60 @@ func (q *Queries) ListCoverageAsc(ctx context.Context, arg ListCoverageAscParams
 	return items, nil
 }
 
-const listCoverageDesc = `-- name: ListCoverageDesc :many
-SELECT id, repo_name, project_name, branch_name, commit, coverage, coverage_date, raw_data FROM coverage
+const listCoverageSummary = `-- name: ListCoverageSummary :many
+SELECT repo_name, project_name, branch_name, commit, coverage, coverage_date FROM coverage
 WHERE repo_name = $1
-    AND project_name = $2
-    AND branch_name = $3
-ORDER BY coverage_date DESC
+  AND project_name = $2
+  AND branch_name = $3
+ORDER BY
+case WHEN lower($6) = 'asc' THEN coverage_date END ASC,
+case WHEN lower($6) = 'desc' THEN coverage_date END DESC,
+coverage_date ASC
 OFFSET $4
 LIMIT $5
 `
 
-type ListCoverageDescParams struct {
-	RepoName    string
-	ProjectName string
-	BranchName  string
-	Offset      int32
-	Limit       int32
+type ListCoverageSummaryParams struct {
+	RepoName       string
+	ProjectName    string
+	BranchName     string
+	Offset         int32
+	Limit          int32
+	OrderDirection string
 }
 
-func (q *Queries) ListCoverageDesc(ctx context.Context, arg ListCoverageDescParams) ([]Coverage, error) {
-	rows, err := q.db.Query(ctx, listCoverageDesc,
+type ListCoverageSummaryRow struct {
+	RepoName     string
+	ProjectName  string
+	BranchName   string
+	Commit       string
+	Coverage     float64
+	CoverageDate pgtype.Timestamptz
+}
+
+func (q *Queries) ListCoverageSummary(ctx context.Context, arg ListCoverageSummaryParams) ([]ListCoverageSummaryRow, error) {
+	rows, err := q.db.Query(ctx, listCoverageSummary,
 		arg.RepoName,
 		arg.ProjectName,
 		arg.BranchName,
 		arg.Offset,
 		arg.Limit,
+		arg.OrderDirection,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Coverage
+	var items []ListCoverageSummaryRow
 	for rows.Next() {
-		var i Coverage
+		var i ListCoverageSummaryRow
 		if err := rows.Scan(
-			&i.ID,
 			&i.RepoName,
 			&i.ProjectName,
 			&i.BranchName,
 			&i.Commit,
 			&i.Coverage,
 			&i.CoverageDate,
-			&i.RawData,
 		); err != nil {
 			return nil, err
 		}

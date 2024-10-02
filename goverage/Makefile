@@ -10,7 +10,7 @@ install:
 	go mod download
 
 run:
-	GOVERAGE_DB_CONN_STR='$(LOCAL_DB_CONN_STR)' GOVERAGE_API_KEY=valid-key go run ./server.go
+	GOVERAGE_DB_CONN_STR=$(LOCAL_DB_CONN_STR) GOVERAGE_API_KEY=valid-key go run ./server.go
 
 lint:
 	go vet

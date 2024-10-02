@@ -14,21 +14,15 @@ WHERE repo_name = $1
     AND "commit" = $4
 LIMIT 1;
 
--- name: ListCoverageDesc :many
-SELECT * FROM coverage
-WHERE repo_name = $1
-    AND project_name = $2
-    AND branch_name = $3
-ORDER BY coverage_date DESC
-OFFSET $4
-LIMIT $5;
-
--- name: ListCoverageAsc :many
+-- name: ListCoverage :many
 SELECT * FROM coverage
 WHERE repo_name = $1
   AND project_name = $2
   AND branch_name = $3
-ORDER BY coverage_date ASC
+ORDER BY
+case WHEN lower(@order_direction) = 'asc' THEN coverage_date END ASC,
+case WHEN lower(@order_direction) = 'desc' THEN coverage_date END DESC,
+coverage_date ASC
 OFFSET $4
 LIMIT $5;
 
@@ -48,3 +42,16 @@ SELECT DISTINCT project_name FROM coverage WHERE repo_name = $1 order by project
 
 -- name: ListBranches :many
 SELECT DISTINCT branch_name FROM coverage WHERE repo_name = $1 AND project_name = $2 order by branch_name;
+
+
+-- name: ListCoverageSummary :many
+SELECT repo_name, project_name, branch_name, commit, coverage, coverage_date FROM coverage
+WHERE repo_name = $1
+  AND project_name = $2
+  AND branch_name = $3
+ORDER BY
+case WHEN lower(@order_direction) = 'asc' THEN coverage_date END ASC,
+case WHEN lower(@order_direction) = 'desc' THEN coverage_date END DESC,
+coverage_date ASC
+OFFSET $4
+LIMIT $5;
