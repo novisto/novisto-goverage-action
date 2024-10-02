@@ -3,14 +3,13 @@ package apiv1
 import (
 	"context"
 	"encoding/json"
+	"goverage/data"
+	"goverage/internal/config"
+	"goverage/internal/httperrors"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
-
-	"goverage/data"
-	"goverage/internal/config"
-	"goverage/internal/httperrors"
 
 	"github.com/cohesivestack/valgo"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -24,8 +23,7 @@ type repository interface {
 	ListBranches(ctx context.Context, params data.ListBranchesParams) ([]string, error)
 	GetRecentCoverage(ctx context.Context, params data.GetRecentCoverageParams) (data.Coverage, error)
 	GetCoverageData(ctx context.Context, params data.GetCoverageDataParams) ([]byte, error)
-	ListCoverageAsc(ctx context.Context, params data.ListCoverageAscParams) ([]data.Coverage, error)
-	ListCoverageDesc(ctx context.Context, params data.ListCoverageDescParams) ([]data.Coverage, error)
+	ListCoverageSummary(ctx context.Context, params data.ListCoverageSummaryParams) ([]data.ListCoverageSummaryRow, error)
 	UpsertCoverage(ctx context.Context, params data.UpsertCoverageParams) (data.Coverage, error)
 	ListRepositories(ctx context.Context) ([]string, error)
 	ListProjects(ctx context.Context, repoName string) ([]string, error)
@@ -60,6 +58,17 @@ type CoverageSchema struct {
 }
 
 func coverageModelToSchema(coverage data.Coverage) CoverageSchema {
+	return CoverageSchema{
+		RepoName:     coverage.RepoName,
+		ProjectName:  coverage.ProjectName,
+		BranchName:   coverage.BranchName,
+		Commit:       coverage.Commit,
+		Coverage:     coverage.Coverage,
+		CoverageDate: coverage.CoverageDate.Time,
+	}
+}
+
+func coverageSummaryModelToSchema(coverage data.ListCoverageSummaryRow) CoverageSchema {
 	return CoverageSchema{
 		RepoName:     coverage.RepoName,
 		ProjectName:  coverage.ProjectName,
@@ -247,7 +256,7 @@ type ListCoverageHistoryRequest struct {
 	BranchName  string  `param:"branchName"`
 	Order       *string `query:"order"`
 	Limit       *int32  `query:"limit"`
-	Page        *int    `query:"page"`
+	Page        *int32  `query:"page"`
 }
 
 func (lr *ListCoverageHistoryRequest) SetDefaults() {
@@ -256,7 +265,7 @@ func (lr *ListCoverageHistoryRequest) SetDefaults() {
 	}
 
 	if lr.Page == nil {
-		lr.Page = lo.ToPtr(1)
+		lr.Page = lo.ToPtr(int32(1))
 	}
 
 	if lr.Limit == nil {
@@ -272,7 +281,7 @@ func (lr *ListCoverageHistoryRequest) Validate() error {
 		Is(valgo.Int32(*lr.Limit, "limit").
 			Between(1, 100, "Limit must be >=1 and <=100"),
 		).
-		Is(valgo.Int(*lr.Page, "page").
+		Is(valgo.Int32(*lr.Page, "page").
 			GreaterOrEqualTo(1, "Page must be >=1"),
 		)
 
@@ -302,27 +311,16 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	var coverages []data.Coverage
+	offset := (*reqData.Page - 1) * *reqData.Limit
 
-	offset := int32((*reqData.Page - 1) * int(*reqData.Limit))
-
-	if *reqData.Order == "asc" {
-		coverages, err = r.repo.ListCoverageAsc(ctx, data.ListCoverageAscParams{
-			RepoName:    reqData.RepoName,
-			ProjectName: reqData.ProjectName,
-			BranchName:  reqData.BranchName,
-			Limit:       *reqData.Limit,
-			Offset:      offset,
-		})
-	} else {
-		coverages, err = r.repo.ListCoverageDesc(ctx, data.ListCoverageDescParams{
-			RepoName:    reqData.RepoName,
-			ProjectName: reqData.ProjectName,
-			BranchName:  reqData.BranchName,
-			Limit:       *reqData.Limit,
-			Offset:      offset,
-		})
-	}
+	coverages, err := r.repo.ListCoverageSummary(ctx, data.ListCoverageSummaryParams{
+		RepoName:       reqData.RepoName,
+		ProjectName:    reqData.ProjectName,
+		BranchName:     reqData.BranchName,
+		Limit:          *reqData.Limit,
+		Offset:         offset,
+		OrderDirection: *reqData.Order,
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get coverage history")
 		return httperrors.WriteResponse(c, http.StatusInternalServerError, "failed to get coverage history")
@@ -330,7 +328,7 @@ func (r *Router) ListCoverageHistory(c echo.Context) error {
 
 	coveragesSchemas := make([]CoverageSchema, 0, len(coverages))
 	for _, coverage := range coverages {
-		coveragesSchemas = append(coveragesSchemas, coverageModelToSchema(coverage))
+		coveragesSchemas = append(coveragesSchemas, coverageSummaryModelToSchema(coverage))
 	}
 
 	return c.JSON(http.StatusOK, coveragesSchemas)
