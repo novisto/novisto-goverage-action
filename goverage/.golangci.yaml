@@ -185,9 +185,6 @@ linters:
     # (c) Bryan C. Mills / https://github.com/bcmills
     - cyclop
 
-    # Abandoned, replaced by `unused`.
-    - deadcode
-
     # Check declaration order of types, consts, vars and funcs.
     # I like it but I don't use it.
     - decorder
@@ -213,7 +210,6 @@ linters:
 
     # Forces to handle more cases. Cool but noisy.
     - exhaustive
-    - exhaustivestruct # Deprecated, replaced by check below.
     - exhaustruct
 
     # Forbids some identifiers. I don't have a case for it.
@@ -252,9 +248,6 @@ linters:
     # I don't use file headers.
     - goheader
 
-    # 1st Go linter, deprecated :( use `revive`.
-    - golint
-
     # Reports magic consts. Might be noisy but still good.
     - gomnd
 
@@ -266,9 +259,6 @@ linters:
 
     # Groupt declarations, I prefer manually.
     - grouper
-
-    # Deprecated.
-    - ifshort
 
     # Checks imports aliases, rare.
     - importas
@@ -291,9 +281,6 @@ linters:
     # Slice declarations with non-zero initial length. Not my case.
     - makezero
 
-    # Deprecated. Use govet `fieldalignment`.
-    - maligned
-
     # Enforce tags in un/marshaled structs. Cool but not my case.
     - musttag
 
@@ -305,9 +292,6 @@ linters:
 
     # Reports all named returns, not that bad.
     - nonamedreturns
-
-    # Deprecated. Replaced by `revive`.
-    - nosnakecase
 
     # Finds misuse of Sprintf with host:port in a URL. Cool but rare.
     - nosprintfhostport
