@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: "goverage/go.mod"
       - name: Install deps
@@ -25,11 +25,10 @@ jobs:
         run: go vet
         working-directory: goverage
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.61.0
+          version: v2.12.2
           working-directory: goverage
-          skip-pkg-cache: true
       - name: Check sqlc
         run: make sqlc-check
         working-directory: goverage
